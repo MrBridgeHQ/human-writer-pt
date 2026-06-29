@@ -1,0 +1,314 @@
+# PT-BR notes:
+# - Apostrophes/curly chars: the analyzer wraps each suspect-vocabulary phrase
+#   with re.escape + \b...\b. Brazilian Portuguese rarely uses apostrophes in
+#   running prose, so the FR straight-vs-curly caveat is mostly moot here. For
+#   ai_constructions, where a curly quote could appear, keep a ['’] class only
+#   where needed.
+# - Suspect vocabulary covers Tier 1 + Tier 2 (~170 entries). Tier 3 is
+#   documented in references/tells-stylistic-pt.md but excluded here:
+#   false-positive risk on common Portuguese words is too high for a per-word
+#   matcher.
+# - The "—" em-dash threshold mirrors the master FR/EN value (1.0). Brazilian
+#   Portuguese has a legitimate native travessão (dialogue/aside), but the AI
+#   tell is the Anglo spaced dash in expository prose; target 0, hard cap ≤ 1
+#   per 1000 words.
+# - min_accent_ratio is the NEW pt-BR typography threshold: the FLOOR for the
+#   ratio of accented Portuguese characters (ç ã õ á é í ó ô ú â ê …) to total
+#   letters. Native pt-BR prose sits around 0.03–0.08; a value far below this
+#   floor means the accents were stripped (a frequent AI/plain-text failure mode
+#   that reads as broken Portuguese). The detector also requires ≥ 40 words
+#   before it can flag, so short accent-sparse snippets don't false-fire.
+#   Calibrated so clean native prose (which always carries accents) does not
+#   flag. Ported from the master French accent hard-check.
+# - burstiness_min and comma_density_max are copied verbatim from the master
+#   thresholds block; they are currently UNREAD by analyze.py (vestigial). Keep
+#   them; do not treat their presence as a bug.
+pt:
+  suspect_vocabulary:
+    # --- Tier 1: high signal ---
+    # Connectors and meta-comments
+    - "vale ressaltar"
+    - "vale destacar"
+    - "vale lembrar"
+    - "vale mencionar"
+    - "vale a pena ressaltar"
+    - "vale a pena destacar"
+    - "é importante destacar"
+    - "é importante ressaltar"
+    - "é importante salientar"
+    - "é importante notar"
+    - "é importante mencionar"
+    - "é importante lembrar"
+    - "é fundamental destacar"
+    - "convém lembrar"
+    - "convém ressaltar"
+    - "cabe ressaltar"
+    - "cabe destacar"
+    - "cabe mencionar"
+    - "sem dúvida"
+    - "sem sombra de dúvida"
+    - "não há dúvida"
+    - "não restam dúvidas"
+    - "como sabemos"
+    - "como todos sabem"
+    - "como é sabido"
+    - "nesse sentido"
+    - "neste sentido"
+    - "a esse respeito"
+    - "dito isso"
+    - "por outro lado"
+    - "por sua vez"
+    # Adverbs and phrases of certainty
+    - "indubitavelmente"
+    - "inegavelmente"
+    - "inquestionavelmente"
+    - "certamente"
+    - "evidentemente"
+    - "obviamente"
+    - "naturalmente"
+    - "seguramente"
+    # Spatial-temporal abstractions
+    - "no mundo atual"
+    - "no mundo de hoje"
+    - "na era digital"
+    - "na era da informação"
+    - "na era da ia"
+    - "nos dias de hoje"
+    - "nos dias atuais"
+    - "atualmente"
+    - "num mundo onde"
+    - "em um mundo onde"
+    - "numa época em que"
+    - "em pleno século xxi"
+    - "ao longo de"
+    - "no coração de"
+    - "no seio de"
+    - "para além de"
+    # Comparators and frames
+    - "à luz de"
+    - "em prol de"
+    - "tendo em vista"
+    - "na hora de"
+    # Metaphorical inflators
+    - "verdadeiro"
+    - "verdadeira"
+    - "autêntico"
+    - "autêntica"
+    - "imprescindível"
+    - "indispensável"
+    - "referência"
+    - "emblemático"
+    - "icônico"
+    - "revolucionário"
+    - "revolucionária"
+    - "transformador"
+    - "transformadora"
+    - "robusto"
+    - "robusta"
+    - "de ponta"
+    - "de vanguarda"
+    - "de última geração"
+    - "de primeira linha"
+    - "de classe mundial"
+    # Structural metaphors
+    - "pedra angular"
+    - "pilar fundamental"
+    - "espinha dorsal"
+    - "eixo central"
+    # Verbs and verbal phrases
+    - "alavancar"
+    - "potencializar"
+    - "impulsionar"
+    - "empoderar"
+    - "desbravar"
+    - "forjar"
+    - "instaurar"
+    - "encarnar"
+    - "materializar"
+    - "cristalizar"
+    - "catalisar"
+    - "abraçar"
+    - "mergulhe"
+    - "mergulhe no mundo"
+    - "embarque"
+    - "embarque nessa jornada"
+    - "desbloqueie"
+    - "desbloqueie o potencial"
+    - "libere o potencial"
+
+    # --- Tier 2: medium signal ---
+    # Verbs
+    - "explore"
+    - "explorar"
+    - "descobrir"
+    - "desvendar"
+    - "revelar"
+    - "transformar"
+    - "revolucionar"
+    - "otimizar"
+    - "agilizar"
+    - "simplificar"
+    - "fomentar"
+    - "favorecer"
+    - "propiciar"
+    - "garantir"
+    - "maximizar"
+    - "minimizar"
+    - "acompanhar"
+    - "abordar"
+    - "gerenciar"
+    - "gerir"
+    - "implementar"
+    - "monitorar"
+    - "navegar por"
+    # Adjectives of importance / intensity
+    - "chave"
+    - "fundamental"
+    - "essencial"
+    - "crucial"
+    - "primordial"
+    - "vital"
+    - "notável"
+    - "relevante"
+    - "significativo"
+    - "expressivo"
+    - "extraordinário"
+    - "excepcional"
+    - "impressionante"
+    - "incrível"
+    - "espetacular"
+    - "único"
+    - "inovador"
+    - "inovadora"
+    - "poderoso"
+    - "potente"
+    - "elegante"
+    - "sofisticado"
+    - "intuitivo"
+    - "escalável"
+    - "perfeito"
+    - "sem emendas"
+    - "sem atritos"
+    # Abstract nouns
+    - "sinergia"
+    - "sinergias"
+    - "ecossistema"
+    - "universo"
+    - "paradigma"
+    - "experiência"
+    - "solução"
+    - "jornada"
+    - "trajetória"
+    - "percurso"
+    - "leque"
+    - "infinidade de"
+    - "uma série de"
+    - "uma vasta gama de"
+    - "uma ampla gama de"
+    # Connectors (overuse)
+    - "além disso"
+    - "ademais"
+    - "outrossim"
+    - "por conseguinte"
+    - "portanto"
+    - "contudo"
+    - "todavia"
+    - "no entanto"
+    - "de fato"
+  ai_constructions:
+    # --- High severity (banned outright) ---
+    - pattern: "Não se trata (?:apenas|só) de"
+      severity: high
+    - pattern: "Mergulhe no"
+      severity: high
+    - pattern: "Mergulhe nesse"
+      severity: high
+    - pattern: "Embarque (?:nessa|nesta) jornada"
+      severity: high
+    - pattern: "Vamos explorar"
+      severity: high
+    - pattern: "No mundo atual"
+      severity: high
+    - pattern: "Na era digital"
+      severity: high
+    - pattern: "Na era da IA"
+      severity: high
+    - pattern: "Imagine um mundo (?:onde|em que)"
+      severity: high
+    - pattern: "E se (?:eu lhe|eu te) dissesse que"
+      severity: high
+    - pattern: "Sem sombra de dúvida"
+      severity: high
+    - pattern: "Vale ressaltar"
+      severity: high
+    - pattern: "Vale destacar"
+      severity: high
+    # --- Medium severity (rare-only) ---
+    - pattern: "Seja você .*? ou"
+      severity: medium
+    - pattern: "Quer você seja .*? ou"
+      severity: medium
+    - pattern: "Prepare-se, porque"
+      severity: medium
+    - pattern: "Vamos detalhar"
+      severity: medium
+    - pattern: "Deixe-me explicar"
+      severity: medium
+    - pattern: "Vamos direto ao ponto"
+      severity: medium
+    - pattern: "Em poucas palavras,"
+      severity: medium
+    - pattern: "Você pode estar se perguntando"
+      severity: medium
+    - pattern: "Talvez você esteja se perguntando"
+      severity: medium
+    - pattern: "O veredito é claro"
+      severity: medium
+    - pattern: "A conclusão é evidente"
+      severity: medium
+    - pattern: "Em conclusão,"
+      severity: medium
+    - pattern: "Para concluir,"
+      severity: medium
+    - pattern: "Em síntese,"
+      severity: medium
+    # --- Low severity (flag only at high frequency) ---
+    - pattern: "Em suma,"
+      severity: low
+    - pattern: "Em última análise,"
+      severity: low
+    - pattern: "Em resumo,"
+      severity: low
+    - pattern: "Por fim,"
+      severity: low
+  thresholds:
+    # PT-BR: the Anglo spaced em-dash "—" reads as an AI tell in expository prose
+    # (native Portuguese reserves the travessão for dialogue and asides). Target
+    # 0; convert to comma/colon/period/parentheses. The en-dash "–" in ranges and
+    # the minus sign are fine; only the wide "—" misused as an emphasis dash is
+    # the tell.
+    em_dash_per_1000_words: 1.0
+    burstiness_min: 8.0
+    sentence_stdev_min: 8.0
+    lexical_diversity_min: 0.45
+    comma_density_max: 2.0
+    bullet_parallelism_max: 0.80
+    # NEW pt-BR typography detector: the FLOOR for the accented-char ratio
+    # (accented Portuguese letters ÷ total letters). Native pt-BR prose sits
+    # around 0.03–0.08; below this floor (on text of ≥ 40 words) the accents were
+    # stripped and the file reads as broken Portuguese. 0.012 is set below the
+    # native floor so clean prose never fires but a fully/heavily de-accented file
+    # (ratio near 0) does.
+    min_accent_ratio: 0.012
+
+content_type_weights:
+  marketing:     {statistical: 1.0, stylistic: 1.0, structural: 1.0}
+  short-comms:   {statistical: 0.6, stylistic: 1.2, structural: 0.5}
+  technical:     {statistical: 0.5, stylistic: 0.7, structural: 0.3}
+  editorial-seo: {statistical: 0.9, stylistic: 1.0, structural: 1.0}
+
+verdict_bands:
+  LOW_RISK: [0, 24]
+  MEDIUM_RISK: [25, 49]
+  HIGH_RISK: [50, 74]
+  CRITICAL: [75, 100]
